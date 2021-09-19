@@ -1,0 +1,64 @@
+﻿@page "/"
+@using Sorting.Core.Contracts
+@using Sorting.Core.Extensions
+@inject IDictionary<SorterKind, ISorter> Sorters
+
+<div class="sorting-area">
+    <h1>Приложение для изучения сортировок</h1>
+    <div class="sorting-control">
+        <Button @onclick="FillRandomNumbers">Сгенерировать массив</Button>
+        <select @bind="SorterKind">
+            @if (Sorters != null)
+            {
+                @foreach (var cnt in Sorters.Keys)
+                {
+                    <option value="@cnt">@cnt</option>
+                }
+            }
+        </select>
+        <select @bind="CountNumbers">
+            @foreach (var count in Enumerable.Range(0,10).Select(item => Math.Pow(10, item)))
+            {
+                <option value="@count">@count</option>
+            }
+                    
+            </select>
+        <button @onclick="SortNumbers">Отсортировать массив</button>
+    </div>
+    <h4>Исходный массив</h4>
+    <textarea @bind="RandomNumbers"></textarea>
+    <h4>Отсортированный массив</h4>
+    <textarea @bind="SortedNumbers"></textarea>
+    <div class="sorting-info">
+        <h4>Время сортировки: @SortingTime</h4>
+        <h4>Количество операций: @SortingOperationsCount</h4>
+    </div>
+</div>
+@code {
+    private string RandomNumbers { get; set; }
+    private string SortedNumbers { get; set; }
+    private string SortingTime { get; set; }
+    private SorterKind SorterKind { get; set; } = SorterKind.BubbleVeryOptimized;
+    private int CountNumbers { get; set; } = 1000;
+    private string SortingOperationsCount { get; set; }
+    private int[] _numbersToSort;
+    private readonly Func<int, int, bool> compare = (a, b) => a >= b;
+
+    private void FillRandomNumbers()
+    {
+        var random = new Random();
+
+        _numbersToSort = random.NextArray(CountNumbers);
+        RandomNumbers = _numbersToSort.ToFormattedString();
+    }
+
+    private void SortNumbers()
+    {
+        var sorter = Sorters[SorterKind];
+        var (sortedArray, (sortingTime, sortingOperationCount)) = sorter.Execute(_numbersToSort, compare);
+        SortedNumbers = sortedArray.ToFormattedString();
+        SortingOperationsCount = sortingOperationCount.ToString();
+        SortingTime = sortingTime.ToString();
+    }
+
+}
